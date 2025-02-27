@@ -55,6 +55,15 @@
             border-radius: 4px;
             border: 1px solid #ddd;
         }
+        .campaign-count {
+            background-color: white;
+            border-radius: 8px;
+            padding: 10px 15px;
+            margin-bottom: 10px;
+            box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+            font-size: 14px;
+            color: #555;
+        }
         table {
             width: 100%;
             border-collapse: collapse;
@@ -127,24 +136,6 @@
             margin-top: 20px;
             border-radius: 8px;
         }
-        .pagination {
-            display: flex;
-            justify-content: center;
-            margin-top: 20px;
-            gap: 5px;
-        }
-        .pagination button {
-            padding: 8px 12px;
-            border: 1px solid #ddd;
-            background-color: white;
-            cursor: pointer;
-            border-radius: 4px;
-        }
-        .pagination button.active {
-            background-color: #007bff;
-            color: white;
-            border-color: #007bff;
-        }
         .last-updated {
             font-size: 12px;
             color: #666;
@@ -213,6 +204,10 @@
     <div id="loading" class="loading">Loading campaigns data...</div>
     
     <div id="table-container" class="table-container" style="display: none;">
+        <div class="campaign-count">
+            Showing <span id="filtered-count">0</span> of <span id="total-count">0</span> campaigns
+        </div>
+        
         <table id="campaign-table">
             <thead>
                 <tr>
@@ -230,10 +225,6 @@
                 <!-- Campaign data will be inserted here by JavaScript -->
             </tbody>
         </table>
-    </div>
-    
-    <div class="pagination" id="pagination">
-        <!-- Pagination will be added here -->
     </div>
     
     <div class="last-updated">
@@ -338,9 +329,7 @@
             }
         }
         
-        // Global variables for pagination
-        let currentPage = 1;
-        const itemsPerPage = 20;
+        // Global variables
         let allCampaigns = [];
         let filteredCampaigns = [];
         
@@ -373,9 +362,6 @@
                 return true;
             });
             
-            // Reset to first page when filters change
-            currentPage = 1;
-            renderPagination();
             renderCampaigns();
             updateDashboardStats();
         }
@@ -391,72 +377,19 @@
             document.getElementById('total-spend').textContent = '$' + totalSpend.toFixed(2);
             document.getElementById('total-revenue').textContent = '$' + totalRevenue.toFixed(2);
             document.getElementById('avg-roas').textContent = avgRoas.toFixed(2);
+            
+            // Update campaign count display
+            document.getElementById('filtered-count').textContent = filteredCampaigns.length;
+            document.getElementById('total-count').textContent = allCampaigns.length;
         }
 
-        // Function to render pagination
-        function renderPagination() {
-            const paginationElement = document.getElementById('pagination');
-            paginationElement.innerHTML = '';
-            
-            const totalPages = Math.ceil(filteredCampaigns.length / itemsPerPage);
-            
-            // Previous button
-            const prevButton = document.createElement('button');
-            prevButton.textContent = '←';
-            prevButton.disabled = currentPage === 1;
-            prevButton.onclick = () => {
-                if (currentPage > 1) {
-                    currentPage--;
-                    renderCampaigns();
-                    renderPagination();
-                }
-            };
-            paginationElement.appendChild(prevButton);
-            
-            // Page buttons
-            let startPage = Math.max(1, currentPage - 2);
-            let endPage = Math.min(totalPages, startPage + 4);
-            
-            if (endPage - startPage < 4 && startPage > 1) {
-                startPage = Math.max(1, endPage - 4);
-            }
-            
-            for (let i = startPage; i <= endPage; i++) {
-                const pageButton = document.createElement('button');
-                pageButton.textContent = i;
-                pageButton.className = i === currentPage ? 'active' : '';
-                pageButton.onclick = () => {
-                    currentPage = i;
-                    renderCampaigns();
-                    renderPagination();
-                };
-                paginationElement.appendChild(pageButton);
-            }
-            
-            // Next button
-            const nextButton = document.createElement('button');
-            nextButton.textContent = '→';
-            nextButton.disabled = currentPage === totalPages;
-            nextButton.onclick = () => {
-                if (currentPage < totalPages) {
-                    currentPage++;
-                    renderCampaigns();
-                    renderPagination();
-                }
-            };
-            paginationElement.appendChild(nextButton);
-        }
-
-        // Function to render campaigns for current page
+        // Function to render campaigns (now shows ALL campaigns at once)
         function renderCampaigns() {
             const tableBody = document.getElementById("campaign-data");
             tableBody.innerHTML = "";
             
-            const start = (currentPage - 1) * itemsPerPage;
-            const end = Math.min(start + itemsPerPage, filteredCampaigns.length);
-            const displayedCampaigns = filteredCampaigns.slice(start, end);
-            
-            displayedCampaigns.forEach(campaign => {
+            // Display all filtered campaigns
+            filteredCampaigns.forEach(campaign => {
                 const row = document.createElement("tr");
                 
                 // Toggle button cell
@@ -544,7 +477,6 @@
                 
                 // Render initial campaigns
                 renderCampaigns();
-                renderPagination();
                 updateDashboardStats();
                 
                 // Set last updated time
@@ -575,6 +507,7 @@
                     setTimeout(() => {
                         // Regenerate data
                         allCampaigns = generateCampaignData(100);
+                        filteredCampaigns = [...allCampaigns];
                         
                         // Reapply filters to the new data
                         applyFilters();
@@ -592,4 +525,3 @@
     </script>
 </body>
 </html>
-
